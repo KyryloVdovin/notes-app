@@ -1,13 +1,20 @@
+// import taskIcon from './img/icons/task';
+
 // Initialize Application state
 let appState = {
     totalItems: 0,
     todo: {},
     completed: {},
+    archived: [],
     pending: {},
     isEditMode: false,
 }
 
-const categoriesData = { Task: 'Task', Idea: 'Idea', RandomThought: 'Random Thought' };
+const categoriesData = { Task: 'Task', Idea: 'Idea', RandomThought: 'RandomThought', Quote: 'Quote' };
+const categoriesIcons = {
+    Task: './img/icons/task.png', Idea: './img/icons/idea.png',
+    RandomThought: './img/icons/randomThought.png', Quote: './img/icons/quote.png'
+};
 const months = [
     'January',
     'February',
@@ -25,35 +32,32 @@ const months = [
 
 function addRow(e) {
     e.preventDefault();
-    // if(document.getElementById('newTodo').value !== ''){
-    //     // Make modification to the DOM
-
-    // }
 
     let itemID = appState['totalItems'];
     var table = document.getElementById('todoTable');
     var row = table.insertRow(table.rows.length);
     row.setAttribute("id", `todoItem-${itemID}`);
-    var task = row.insertCell(0);
+
+    var icon = row.insertCell(0);
+
+    icon.innerHTML += "<td><img src=\"" + categoriesIcons.Task + "\" id=\"icon-" + itemID + "\"></img></td>";
+
+    var task = row.insertCell(1);
 
     task.innerHTML += "<td><span id=\"title-" + itemID + "\">" + "new item" + "</span></td>";
     task.innerHTML += "<input id=\"inputTitle-" + itemID + "\" type=\"text\" />";;
     var inputTitle = document.getElementById('inputTitle-' + itemID);
     inputTitle.style.display = 'none';
-    // task.setAttribute("id", `todoItem-${itemID}`);
 
-    var createdAt = row.insertCell(1);
+    var createdAt = row.insertCell(2);
     let currentData = new Date();
     let month = months[currentData.getMonth()];
     let day = currentData.getDate();
     let year = currentData.getFullYear();
     let fullDate = `${month} ${day}, ${year}`;
     createdAt.innerHTML += "<td><span id=\"value-" + itemID + "\">" + fullDate + "</span></td>";
-    // createdAt.innerHTML += "<input id=\"input-" + itemID + "\" type=\"text\" />";;
-    // var input = document.getElementById('input-' + itemID);
-    // input.style.display = 'none';
 
-    var category = row.insertCell(2);
+    var category = row.insertCell(3);
 
     category.innerHTML += "<td><span id=\"category-" + itemID + "\">" + categoriesData.Task + "</span></td>";
     category.innerHTML += "<select id=\"categoryDropDown-" + itemID + "\" type=\"text\" />";;
@@ -69,29 +73,33 @@ function addRow(e) {
     }
     categoryDropDown.style.display = 'none';
 
-    var content = row.insertCell(3);
+    var content = row.insertCell(4);
     content.innerHTML += "<td><span id=\"content-" + itemID + "\">" + "content" + "</span></td>";
     content.innerHTML += "<input id=\"contentInput-" + itemID + "\" type=\"text\" />";;
     var contentInput = document.getElementById('contentInput-' + itemID);
     contentInput.style.display = 'none';
 
-    var dates = row.insertCell(4);
+    var dates = row.insertCell(5);
     dates.innerHTML += "<td>" + "dates" + "</td>";
 
-    var editBtn = row.insertCell(5);
+    var editBtn = row.insertCell(6);
     editBtn.innerHTML += "<td><button>" + "edit" + "</button></td>";
     editBtn.addEventListener("click", function (e) {
         e.preventDefault();
         editButton(itemID);
     });
 
-    var completeBtn = row.insertCell(6);
+    var completeBtn = row.insertCell(7);
     completeBtn.innerHTML += "<td><button>" + "complete" + "</button></td>";
 
-    var deleteBtn = row.insertCell(7);
+    var deleteBtn = row.insertCell(8);
     deleteBtn.innerHTML += "<td><button>" + "delete" + "</button></td>";
+    deleteBtn.addEventListener("click", function (e) {
+        e.preventDefault();
+        deleteNote(itemID);
+    });
 
-    var saveBtn = row.insertCell(8);
+    var saveBtn = row.insertCell(9);
     saveBtn.innerHTML += "<td><button id=\"saveBtn-" + itemID + "\">" + "save" + "</button></td>";
     saveBtn.addEventListener("click", function (e) {
         e.preventDefault();
@@ -99,16 +107,14 @@ function addRow(e) {
     });
     saveBtn.style.display = "none";
 
-    // var status = row.insertCell(9);
-    // status.innerHTML += "<td><label><input id=\"" + itemID + "\" type=\"checkbox\" onclick=\"toggleTodo(this)\"/><span></span></label></td>";
-
-    // Add todo state Object
     if (!appState['todo'][itemID]) {
         appState['todo'][itemID] = {
             item: 'new item',
-            category: categoriesData.RandomThought,
+            category: categoriesData.Task,
             content: 'text',
-            isEditing: false
+            iconPath: './img/icons/task.png',
+            fullDate: fullDate,
+            isArchived: false,
         };
     }
 
@@ -127,6 +133,7 @@ function addRow(e) {
     // document.getElementById('newTodo').value = "";
 
     console.log(appState);
+    countElements();
 }
 
 function toggleTodo(cb) {
@@ -252,7 +259,7 @@ function saveButton(itemId) {
         item: inputTitle.value,
         category: categoryDropDown.value,
         content: contentInput.value,
-        isEditing: false
+        isArchived: false
     };
     updateElement(itemId);
 
@@ -265,6 +272,23 @@ function saveButton(itemId) {
     // }
 }
 
+function deleteNote(itemId) {
+    appState['todo'][itemId] = {
+        ...appState['todo'][itemId],
+        isArchived: true
+    };
+    appState['archived'].push({
+        ...appState['todo'][itemId],
+        isArchived: true,
+    });
+
+    // if(appState['todo'][itemId].isArchived)
+
+    let item = document.getElementById(`todoItem-${itemId}`);
+    item.remove();
+    countElements();
+}
+
 function renderPendingElements(pending, itemID) {
     var ul = document.getElementById('pendingItems');
     var li = document.createElement('li');
@@ -273,12 +297,94 @@ function renderPendingElements(pending, itemID) {
     ul.appendChild(li);
 }
 
+function countElements() {
+    let tasks = 0;
+    let idea = 0;
+    let randomThought = 0;
+    let quote = 0;
+
+    for (const [key, value] of Object.entries(appState['todo'])) {
+        if (!value.isArchived) {
+            switch (value.category) {
+                case 'Task':
+                    tasks++;
+                    break;
+                case 'Idea':
+                    idea++;
+                    break;
+                case 'RandomThought':
+                    randomThought++;
+                    break;
+                case 'Quote':
+                    quote++;
+                    break;
+            }
+        }
+    }
+
+    var taskSummaryActiveCount = document.getElementById('task-summary-active-count');
+    var randomThoughtSummaryActiveCount = document.getElementById('random-thought-summary-active-count');
+    var ideaSummaryActiveCount = document.getElementById('idea-summary-active-count');
+    var quotesSummaryActiveCount = document.getElementById('quotes-summary-active-count');
+
+    taskSummaryActiveCount.innerHTML = tasks;
+    randomThoughtSummaryActiveCount.innerHTML = randomThought;
+    ideaSummaryActiveCount.innerHTML = idea;
+    quotesSummaryActiveCount.innerHTML = quote;
+}
+
+function showArchivedTasks(e) {
+    e.preventDefault();
+    console.log("appState.archived = " + appState.archived.length);
+    appState.archived.map((item, index) => {
+        createArchivedItem(item, index);
+    });
+}
+
+function createArchivedItem(item, itemID) {
+    let table = document.getElementById('archived-items');
+    var row = table.insertRow(table.rows.length);
+    row.setAttribute("id", `todoItem-${itemID}`);
+
+    var icon = row.insertCell(0);
+
+    icon.innerHTML += "<td><img src=\"" + categoriesIcons[item.category] + "\" id=\"icon-" + itemID + "\"></img></td>";
+
+    var task = row.insertCell(1);
+
+    task.innerHTML += "<td><span id=\"title-" + item.item + "\">" + item.item + "</span></td>";
+
+    var createdAt = row.insertCell(2);
+    createdAt.innerHTML += "<td><span id=\"value-" + itemID + "\">" + item.fullDate + "</span></td>";
+
+    var category = row.insertCell(3);
+
+    category.innerHTML += "<td><span id=\"category-" + item.category + "\">" + item.category + "</span></td>";
+
+    var content = row.insertCell(4);
+    content.innerHTML += "<td><span id=\"content-" + item.content + "\">" + item.content + "</span></td>";
+
+    var dates = row.insertCell(5);
+    dates.innerHTML += "<td>" + "dates" + "</td>";
+
+    var editBtn = row.insertCell(6);
+    editBtn.innerHTML += "<td><button>" + "unarchive" + "</button></td>";
+    editBtn.addEventListener("click", function (e) {
+        e.preventDefault();
+        // editButton(itemID);
+    });
+}
+
 function updateElement(itemId) {
+    countElements();
+
     var item = document.getElementById(`todoItem-${itemId}`);
     var title = document.getElementById(`title-${itemId}`);
     var content = document.getElementById(`content-${itemId}`);
     var category = document.getElementById(`category-${itemId}`);
+    var icon = document.getElementById(`icon-${itemId}`);
     title.innerHTML = appState['todo'][itemId].item;
     content.innerHTML = appState['todo'][itemId].content;
     category.innerHTML = appState['todo'][itemId].category;
+    icon.src = categoriesIcons[appState['todo'][itemId].category];
 }

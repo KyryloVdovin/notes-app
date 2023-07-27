@@ -6,6 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="summary-table.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
     <script src="notes.js"></script>
     <title>NotesApp</title>
@@ -56,7 +57,66 @@
                 </div>
             </div>
         </div>
+
+        <div class="summary-table">
+            <div class="summary-table-titles">
+                <div class="category-title">Note Category</div>
+                <div>Acive</div>
+                <div>Archived</div>
+            </div>
+            <div class="summary-table-container">
+                <div id="task-summary-item" class="task-summary summary-item" onclick="showSummaryTable(event)">
+                    <img class="icon" src="./img/icons/task.png" />
+                    <div class="category">
+                        <div>Task</div>
+                    </div>
+                    <div id="task-summary-active-count" class="count">0</div>
+                    <div id="task-summary-archived-count" class="count">0</div>
+                </div>
+                <div id="random-thought-summary-item" class="random-thought-summary summary-item">
+                    <img class="icon" src="./img/icons/randomThought.png" />
+                    <div class="category">
+                        <div>Random thounght</div>
+                    </div>
+                    <div id="random-thought-summary-active-count" class="count">0</div>
+                    <div id="random-thought-summary-archived-count" class="count">0</div>
+                </div>
+                <div id="idea-summary-item" class="idea-summary summary-item">
+                    <img class="icon" src="./img/icons/idea.png" />
+                    <div class="category">
+                        <div>Idea</div>
+                    </div>
+                    <div id="idea-summary-active-count" class="count">0</div>
+                    <div id="idea-summary-archived-count" class="count">0</div>
+                </div>
+                <div id="quotes-summary-item" class="quotes-summary summary-item">
+                    <img class="icon" src="./img/icons/quote.png" />
+                    <div class="category">
+                        <div>Quote</div>
+                    </div>
+                    <div id="quotes-summary-active-count" class="count">0</div>
+                    <div id="quotes-summary-archived-count" class="count">0</div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <div class="popup__bg">
+            <div class="popup">
+                <!-- <div id="archived-items">
+                    empty
+                </div> -->
+                <table id="archived-items">
+                    <tbody>
+                    </tbody>
+                </table>
+                <button id="close" type="submit" onclick="hideSummaryTable(event)">Close</button>
+            </div>
+        </div>
     </div>
+
+    <script src="summary-table.js"></script>
 </body>
 
 </html>

@@ -3,3 +3,53 @@
     padding: 20px !important;
     margin: 10px !important;
 }
+
+.container {
+    margin: 100px auto !important;
+}
+
+.summary-table-titles {
+    background-color: rgb(83, 83, 83);
+    display: flex;
+    justify-content: space-around;
+    color: white;
+    font-weight: 600;
+    padding: 15px;
+}
+
+.category-title {
+    width: 200px;
+}
+
+.summary-table-container .summary-item {
+    margin-top: 10px;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-around;
+    background-color: rgb(176, 196, 213);
+    padding: 15px;
+    position: relative;
+    cursor: pointer;
+}
+
+.category {
+    display: flex;
+    width: 200px;
+}
+
+.count {
+    width: 35px;
+}
+
+.icon {
+    width: 32px;
+    height: 32px;
+    position: absolute;
+    left: 20px;
+}
+
+.summary-item div {
+    margin: auto 0;
+}
