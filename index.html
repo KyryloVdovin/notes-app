@@ -1,19 +1,62 @@
 <!DOCTYPE html>
 <html>
 
-    <head>
-    	<meta http-equiv="Content-type" content ="text/html;charset=utf-8"/>
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+    <meta http-equiv="Content-type" content="text/html;charset=utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <script src="notes.js"></script>
+    <title>NotesApp</title>
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#ffc40d">
+    <meta name="theme-color" content="#ffffff">
+</head>
 
-    	<title>NotesApp</title>
-        <link rel="manifest" href="/site.webmanifest">
-        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
-        <meta name="msapplication-TileColor" content="#ffc40d">
-        <meta name="theme-color" content="#ffffff">
-    </head>
+<body>
+    <div class="container">
+        <h5>Notes app</h5>
+        <hr>
+        <br>
+        <form action="#">
+            <table id="todoTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Created</th>
+                        <th>Category</th>
+                        <th>Content</th>
+                        <th>Dates</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+            <!-- <input type="text" name="newTodo" id="newTodo" placeholder="Enter New To-do item" required> -->
+            <button id="createNoteBtn" class="btn" onclick="addRow(event)">Create node</button>
+        </form>
+        <br>
 
-    <body>
-        
-    </body>
+        <br><br><br>
+        <div class="row">
+            <div class="card col l5 m12 s12 grey darken-3 white-text">
+                <span class="card-title">Completed Tasks</span>
+                <div class="card-content">
+                    <ul id="completedItems" class="collection padding">
+                    </ul>
+                </div>
+            </div>
+            <div class="card col l5 m12 s12 grey darken-3 white-text">
+                <span class="card-title">Pending Tasks</span>
+                <div class="card-content">
+                    <ul id="pendingItems" class="collection padding">
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
 </html>
