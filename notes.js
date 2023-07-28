@@ -1,4 +1,3 @@
-// import taskIcon from './img/icons/task';
 
 // Initialize Application state
 let appState = {
@@ -31,15 +30,42 @@ const months = [
     'December',
 ]
 
-function recreatedArchivedNote(){
-    addRow();
-}
+let archivedItem;
 
 function addRow(e, unarchivClicked = false) {
     e.preventDefault();
 
     let itemID = appState['totalActiveItems'];
     var table = document.getElementById('todoTable');
+
+    let currentData = new Date();
+    let month = months[currentData.getMonth()];
+    let day = currentData.getDate();
+    let year = currentData.getFullYear();
+    let fullDate = `${month} ${day}, ${year}`;
+
+    if (!unarchivClicked) {
+        if (!appState['todo'][itemID]) {
+            appState['todo'][itemID] = {
+                id: itemID,
+                item: 'new item',
+                category: categoriesData.Task,
+                content: 'text',
+                iconPath: './img/icons/task.png',
+                fullDate: fullDate,
+                isArchived: false,
+            };
+        }
+    }
+    else {
+        if (!appState['todo'][itemID]) {
+            appState['todo'][itemID] = {
+                ...archivedItem,
+                isArchived: false
+            };
+        }
+    }
+
     var row = table.insertRow(table.rows.length);
     row.setAttribute("id", `todoItem-${itemID}`);
 
@@ -49,22 +75,17 @@ function addRow(e, unarchivClicked = false) {
 
     var task = row.insertCell(1);
 
-    task.innerHTML += "<td><span id=\"title-" + itemID + "\">" + "new item" + "</span></td>";
+    task.innerHTML += "<td><span id=\"title-" + itemID + "\">" + appState['todo'][itemID].item + "</span></td>";
     task.innerHTML += "<input id=\"inputTitle-" + itemID + "\" type=\"text\" />";;
     var inputTitle = document.getElementById('inputTitle-' + itemID);
     inputTitle.style.display = 'none';
 
     var createdAt = row.insertCell(2);
-    let currentData = new Date();
-    let month = months[currentData.getMonth()];
-    let day = currentData.getDate();
-    let year = currentData.getFullYear();
-    let fullDate = `${month} ${day}, ${year}`;
-    createdAt.innerHTML += "<td><span id=\"value-" + itemID + "\">" + fullDate + "</span></td>";
+    createdAt.innerHTML += "<td><span id=\"value-" + itemID + "\">" + appState['todo'][itemID].fullDate + "</span></td>";
 
     var category = row.insertCell(3);
 
-    category.innerHTML += "<td><span id=\"category-" + itemID + "\">" + categoriesData.Task + "</span></td>";
+    category.innerHTML += "<td><span id=\"category-" + itemID + "\">" + appState['todo'][itemID].category + "</span></td>";
     category.innerHTML += "<select id=\"categoryDropDown-" + itemID + "\" type=\"text\" />";;
     var categoryDropDown = document.getElementById('categoryDropDown-' + itemID);
     for (let key in categoriesData) {
@@ -79,7 +100,7 @@ function addRow(e, unarchivClicked = false) {
     categoryDropDown.style.display = 'none';
 
     var content = row.insertCell(4);
-    content.innerHTML += "<td><span id=\"content-" + itemID + "\">" + "content" + "</span></td>";
+    content.innerHTML += "<td><span id=\"content-" + itemID + "\">" + appState['todo'][itemID].content + "</span></td>";
     content.innerHTML += "<input id=\"contentInput-" + itemID + "\" type=\"text\" />";;
     var contentInput = document.getElementById('contentInput-' + itemID);
     contentInput.style.display = 'none';
@@ -109,32 +130,10 @@ function addRow(e, unarchivClicked = false) {
     });
     saveBtn.style.display = "none";
 
-    if (!unarchivClicked) {
-        if (!appState['todo'][itemID]) {
-            appState['todo'][itemID] = {
-                id: itemID,
-                item: 'new item',
-                category: categoriesData.Task,
-                content: 'text',
-                iconPath: './img/icons/task.png',
-                fullDate: fullDate,
-                isArchived: false,
-            };
-        }
-    }
-    else{
-        if (!appState['todo'][itemID]) {
-            appState['todo'][itemID] = {
-                ...archivedItem
-            };
-        }
-    }
-
-    // Increment the total number of items in state object
     appState['totalActiveItems'] += 1;
 
     console.log(appState);
-    countElements();
+    countActiveElements();
 }
 
 function editButton(itemId) {
@@ -163,6 +162,7 @@ function editButton(itemId) {
         var title = document.getElementById(`title-${itemId}`);
         var content = document.getElementById(`content-${itemId}`);
         var category = document.getElementById(`category-${itemId}`);
+
         inputTitle.value = appState['todo'][itemId].item;
         contentInput.value = appState['todo'][itemId].content;
         inputTitle.style.display = 'block';
@@ -180,6 +180,7 @@ function saveButton(itemId) {
     appState['isEditMode'] = false;
 
     let buttons = document.getElementById('todoTable').getElementsByTagName("button");
+
     for (let button of buttons) {
         button.disabled = false;
     }
@@ -192,6 +193,7 @@ function saveButton(itemId) {
         let buttons = item.getElementsByTagName("button");
         let saveBtn = document.getElementById(`saveBtn-${itemId}`).parentNode;
         let createNodeBtn = document.getElementById('createNoteBtn');
+
         for (let button of buttons) {
             if (`todoItem-${itemId}`) {
                 button.parentNode.style.display = 'table-cell';
@@ -201,6 +203,7 @@ function saveButton(itemId) {
         var title = document.getElementById(`title-${itemId}`);
         var content = document.getElementById(`content-${itemId}`);
         var category = document.getElementById(`category-${itemId}`);
+
         inputTitle.style.display = 'none';
         contentInput.style.display = 'none';
         categoryDropDown.style.display = 'none';
@@ -231,48 +234,44 @@ function deleteNote(itemId) {
         ...appState['todo'][itemId],
         isArchived: true,
     });
+
     appState['totalActiveItems'] -= 1;
     delete appState['todo'][itemId];
     let item = document.getElementById(`todoItem-${itemId}`);
     item.remove();
-    countElements();
+
+    countActiveElements();
+    countArchivedElements();
 }
 
 function renderPendingElements(pending, itemID) {
     var ul = document.getElementById('pendingItems');
     var li = document.createElement('li');
+
     li.appendChild(document.createTextNode(pending[itemID]['item']));
     li.setAttribute("id", `pendingList-${itemID}`);
     ul.appendChild(li);
 }
 
-function countElements() {
+function countActiveElements() {
     let activeTasks = 0;
     let activeIdea = 0;
     let activeRandomThought = 0;
     let activeQuote = 0;
-    let archivedTasks = 0;
-    let archivedIdea = 0;
-    let archivedRandomThought = 0;
-    let archivedQuote = 0;
 
     for (const [key, value] of Object.entries(appState['todo'])) {
         switch (value.category) {
             case 'Task':
                 activeTasks = !value.isArchived ? activeTasks + 1 : activeTasks;
-                archivedTasks = value.isArchived ? archivedTasks + 1 : archivedTasks;
                 break;
             case 'Idea':
                 activeIdea = !value.isArchived ? activeIdea + 1 : activeIdea;
-                archivedIdea = value.isArchived ? archivedIdea + 1 : archivedIdea;
                 break;
             case 'RandomThought':
                 activeRandomThought = !value.isArchived ? activeRandomThought + 1 : activeRandomThought;
-                archivedRandomThought = value.isArchived ? archivedRandomThought + 1 : archivedRandomThought;
                 break;
             case 'Quote':
                 activeQuote = !value.isArchived ? activeQuote + 1 : activeQuote;
-                archivedQuote = value.isArchived ? archivedQuote + 1 : archivedQuote;
                 break;
         }
     }
@@ -282,15 +281,38 @@ function countElements() {
     var ideaSummaryActiveCount = document.getElementById('idea-summary-active-count');
     var quotesSummaryActiveCount = document.getElementById('quotes-summary-active-count');
 
-    var taskSummaryArchivedCount = document.getElementById('task-summary-archived-count');
-    var randomThoughtSummaryArchivedCount = document.getElementById('random-thought-summary-archived-count');
-    var ideaSummaryArchivedCount = document.getElementById('idea-summary-archived-count');
-    var quotesSummaryArchivedCount = document.getElementById('quotes-summary-archived-count');
-
     taskSummaryActiveCount.innerHTML = activeTasks;
     randomThoughtSummaryActiveCount.innerHTML = activeRandomThought;
     ideaSummaryActiveCount.innerHTML = activeIdea;
     quotesSummaryActiveCount.innerHTML = activeQuote;
+}
+function countArchivedElements() {
+    let archivedTasks = 0;
+    let archivedIdea = 0;
+    let archivedRandomThought = 0;
+    let archivedQuote = 0;
+
+    for (const [key, value] of Object.entries(appState['archived'])) {
+        switch (value.category) {
+            case 'Task':
+                archivedTasks = value.isArchived ? archivedTasks + 1 : archivedTasks;
+                break;
+            case 'Idea':
+                archivedIdea = value.isArchived ? archivedIdea + 1 : archivedIdea;
+                break;
+            case 'RandomThought':
+                archivedRandomThought = value.isArchived ? archivedRandomThought + 1 : archivedRandomThought;
+                break;
+            case 'Quote':
+                archivedQuote = value.isArchived ? archivedQuote + 1 : archivedQuote;
+                break;
+        }
+    }
+
+    var taskSummaryArchivedCount = document.getElementById('task-summary-archived-count');
+    var randomThoughtSummaryArchivedCount = document.getElementById('random-thought-summary-archived-count');
+    var ideaSummaryArchivedCount = document.getElementById('idea-summary-archived-count');
+    var quotesSummaryArchivedCount = document.getElementById('quotes-summary-archived-count');
 
     taskSummaryArchivedCount.innerHTML = archivedTasks;
     randomThoughtSummaryArchivedCount.innerHTML = archivedRandomThought;
@@ -302,6 +324,7 @@ let category;
 function setCategory(type) {
     category = type;
 }
+
 function showArchivedTasks(e) {
     e.preventDefault();
     let table = document.getElementById('archived-items');
@@ -348,30 +371,25 @@ function createArchivedItem(item, itemID) {
         unarchiveItem(e, item);
     });
 }
-let archivedItem;
+
 
 function unarchiveItem(e, item) {
     archivedItem = appState.archived.find(element => element.id === item.id);
     const index = appState.archived.indexOf(item);
 
-    // appState['todo'][archivedItem.id] = {
-    //     ...appState['todo'][archivedItem.id],
-    //     isArchived: false
-    // };
-    if (index > -1) { // only splice array when item is found
-        appState.archived.splice(index, 1); // 2nd parameter means remove one item only
+    if (index > -1) {
+        appState.archived.splice(index, 1);
     }
-    // appState.archived
-    // appState.archived.filter(item => item.id !== archivedItem.id)
-    // delete appState['todo'][archivedItem.id];
+
     addRow(e, true);
     showArchivedTasks(e);
+    countArchivedElements();
+    countActiveElements();
 }
 
 function updateElement(itemId) {
-    countElements();
+    countActiveElements();
 
-    var item = document.getElementById(`todoItem-${itemId}`);
     var title = document.getElementById(`title-${itemId}`);
     var content = document.getElementById(`content-${itemId}`);
     var category = document.getElementById(`category-${itemId}`);
