@@ -32,6 +32,7 @@ const months = [
 
 let archivedItem;
 let saveBlocked = false;
+let category;
 
 function addRow(e, unarchivClicked = false) {
     e.preventDefault();
@@ -94,6 +95,7 @@ function addRow(e, unarchivClicked = false) {
     category.innerHTML += "<td><span id=\"category-" + itemID + "\">" + appState['todo'][itemID].category + "</span></td>";
     category.innerHTML += "<select id=\"categoryDropDown-" + itemID + "\" type=\"text\" />";;
     var categoryDropDown = document.getElementById('categoryDropDown-' + itemID);
+
     for (let key in categoriesData) {
         let option = document.createElement("option");
         option.setAttribute('value', categoriesData[key]);
@@ -162,18 +164,7 @@ function addRow(e, unarchivClicked = false) {
 
     appState['totalActiveItems'] += 1;
 
-    console.log(appState);
     countActiveElements();
-}
-
-function onDatesChanges() {
-    const pattern = /\d{2}[/]\d{2}[/]\d{4}/gm;
-    const dates = '11/07/2023, 12/07/2023, 13/07/2023';
-    const splited = dates.split(',');
-    for (let i = 0; i < splited.length; i++) {
-        let a = splited[i].match(pattern);
-        console.log(a);
-    }
 }
 
 function editButton(itemId) {
@@ -272,6 +263,7 @@ function saveButton(itemId) {
         dates: datesInput.value,
         isArchived: false
     };
+
     updateElement(itemId);
 }
 
@@ -327,6 +319,7 @@ function countActiveElements() {
     ideaSummaryActiveCount.innerHTML = activeIdea;
     quotesSummaryActiveCount.innerHTML = activeQuote;
 }
+
 function countArchivedElements() {
     let archivedTasks = 0;
     let archivedIdea = 0;
@@ -360,7 +353,6 @@ function countArchivedElements() {
     ideaSummaryArchivedCount.innerHTML = archivedIdea;
     quotesSummaryArchivedCount.innerHTML = archivedQuote;
 }
-let category;
 
 function setCategory(type) {
     category = type;
