@@ -31,11 +31,12 @@ const months = [
 ]
 
 let archivedItem;
+let saveBlocked = false;
 
 function addRow(e, unarchivClicked = false) {
     e.preventDefault();
 
-    let itemID = appState['totalActiveItems'];
+    let itemID;
     var table = document.getElementById('todoTable');
 
     let currentData = new Date();
@@ -46,6 +47,8 @@ function addRow(e, unarchivClicked = false) {
 
     if (!unarchivClicked) {
         if (!appState['todo'][itemID]) {
+            itemID = appState['totalActiveItems'];
+
             appState['todo'][itemID] = {
                 id: itemID,
                 item: 'new item',
@@ -53,13 +56,16 @@ function addRow(e, unarchivClicked = false) {
                 content: 'text',
                 iconPath: './img/icons/task.png',
                 fullDate: fullDate,
+                dates: '',
                 isArchived: false,
             };
         }
     }
     else {
-        if (!appState['todo'][itemID]) {
-            appState['todo'][itemID] = {
+        if (!appState['todo'][archivedItem.id]) {
+
+            itemID = archivedItem.id;
+            appState['todo'][archivedItem.id] = {
                 ...archivedItem,
                 isArchived: false
             };
@@ -106,7 +112,10 @@ function addRow(e, unarchivClicked = false) {
     contentInput.style.display = 'none';
 
     var dates = row.insertCell(5);
-    dates.innerHTML += "<td>" + "dates" + "</td>";
+    dates.innerHTML += "<td><span id=\"dates-" + itemID + "\">" + appState['todo'][itemID].dates + "</span></td>";
+    dates.innerHTML += "<input id=\"datesInput-" + itemID + "\" type=\"text\" />";;
+    var datesInput = document.getElementById('datesInput-' + itemID);
+    datesInput.style.display = 'none';
 
     var editBtn = row.insertCell(6);
     editBtn.innerHTML += "<td><button>" + "edit" + "</button></td>";
@@ -124,16 +133,47 @@ function addRow(e, unarchivClicked = false) {
 
     var saveBtn = row.insertCell(8);
     saveBtn.innerHTML += "<td><button id=\"saveBtn-" + itemID + "\">" + "save" + "</button></td>";
-    saveBtn.addEventListener("click", function (e) {
+    var saveButtonObject = document.getElementById('saveBtn-' + itemID);
+    saveButtonObject.addEventListener("click", function (e) {
         e.preventDefault();
         saveButton(itemID);
     });
     saveBtn.style.display = "none";
 
+    datesInput.addEventListener("change", function (e) {
+        e.preventDefault();
+        const pattern = /\d{2}[/]\d{2}[/]\d{4}/gm;
+        const splited = datesInput.value.split(',');
+
+        for (let i = 0; i < splited.length; i++) {
+            let date = splited[i].match(pattern);
+
+            if (date === null) {
+                saveButtonObject.disabled = true;
+                saveButtonObject.disabled = datesInput.value !== '';
+
+                return;
+            }
+            else if (date !== null) {
+                saveButtonObject.disabled = false;
+            }
+        }
+    });
+
     appState['totalActiveItems'] += 1;
 
     console.log(appState);
     countActiveElements();
+}
+
+function onDatesChanges() {
+    const pattern = /\d{2}[/]\d{2}[/]\d{4}/gm;
+    const dates = '11/07/2023, 12/07/2023, 13/07/2023';
+    const splited = dates.split(',');
+    for (let i = 0; i < splited.length; i++) {
+        let a = splited[i].match(pattern);
+        console.log(a);
+    }
 }
 
 function editButton(itemId) {
@@ -148,6 +188,7 @@ function editButton(itemId) {
         var item = document.getElementById(`todoItem-${itemId}`);
         var inputTitle = document.getElementById(`inputTitle-${itemId}`);
         var contentInput = document.getElementById(`contentInput-${itemId}`);
+        var datesInput = document.getElementById(`datesInput-${itemId}`);
         var categoryDropDown = document.getElementById(`categoryDropDown-${itemId}`);
         let buttons = item.getElementsByTagName("button");
         let saveBtn = document.getElementById(`saveBtn-${itemId}`).parentNode;
@@ -161,15 +202,19 @@ function editButton(itemId) {
 
         var title = document.getElementById(`title-${itemId}`);
         var content = document.getElementById(`content-${itemId}`);
+        var dates = document.getElementById(`dates-${itemId}`);
         var category = document.getElementById(`category-${itemId}`);
 
         inputTitle.value = appState['todo'][itemId].item;
         contentInput.value = appState['todo'][itemId].content;
+        datesInput.value = appState['todo'][itemId].dates;
         inputTitle.style.display = 'block';
         contentInput.style.display = 'block';
+        datesInput.style.display = 'block';
         categoryDropDown.style.display = 'block';
         title.style.display = 'none';
         content.style.display = 'none';
+        dates.style.display = 'none';
         category.style.display = 'none';
         saveBtn.style.display = 'block';
         saveBtn.firstChild.disabled = false;
@@ -189,6 +234,7 @@ function saveButton(itemId) {
         var item = document.getElementById(`todoItem-${itemId}`);
         var inputTitle = document.getElementById(`inputTitle-${itemId}`);
         var contentInput = document.getElementById(`contentInput-${itemId}`);
+        var datesInput = document.getElementById(`datesInput-${itemId}`);
         var categoryDropDown = document.getElementById(`categoryDropDown-${itemId}`);
         let buttons = item.getElementsByTagName("button");
         let saveBtn = document.getElementById(`saveBtn-${itemId}`).parentNode;
@@ -202,14 +248,17 @@ function saveButton(itemId) {
 
         var title = document.getElementById(`title-${itemId}`);
         var content = document.getElementById(`content-${itemId}`);
+        var dates = document.getElementById(`dates-${itemId}`);
         var category = document.getElementById(`category-${itemId}`);
 
         inputTitle.style.display = 'none';
         contentInput.style.display = 'none';
+        datesInput.style.display = 'none';
         categoryDropDown.style.display = 'none';
         category.style.display = 'block';
         title.style.display = 'block';
         content.style.display = 'block';
+        dates.style.display = 'block';
         saveBtn.style.display = 'none';
         saveBtn.firstChild.disabled = true;
         createNodeBtn.disabled = false;
@@ -220,6 +269,7 @@ function saveButton(itemId) {
         item: inputTitle.value,
         category: categoryDropDown.value,
         content: contentInput.value,
+        dates: datesInput.value,
         isArchived: false
     };
     updateElement(itemId);
@@ -242,15 +292,6 @@ function deleteNote(itemId) {
 
     countActiveElements();
     countArchivedElements();
-}
-
-function renderPendingElements(pending, itemID) {
-    var ul = document.getElementById('pendingItems');
-    var li = document.createElement('li');
-
-    li.appendChild(document.createTextNode(pending[itemID]['item']));
-    li.setAttribute("id", `pendingList-${itemID}`);
-    ul.appendChild(li);
 }
 
 function countActiveElements() {
@@ -362,7 +403,7 @@ function createArchivedItem(item, itemID) {
     content.innerHTML += "<td><span id=\"content-" + item.content + "\">" + item.content + "</span></td>";
 
     var dates = row.insertCell(5);
-    dates.innerHTML += "<td>" + "dates" + "</td>";
+    dates.innerHTML += "<td>" + item.dates + "</td>";
 
     var unarchiveBtn = row.insertCell(6);
     unarchiveBtn.innerHTML += "<td><button>" + "unarchive" + "</button></td>";
@@ -374,7 +415,7 @@ function createArchivedItem(item, itemID) {
 
 
 function unarchiveItem(e, item) {
-    archivedItem = appState.archived.find(element => element.id === item.id);
+    archivedItem = [...appState.archived].find(element => element.id === item.id);
     const index = appState.archived.indexOf(item);
 
     if (index > -1) {
@@ -392,10 +433,12 @@ function updateElement(itemId) {
 
     var title = document.getElementById(`title-${itemId}`);
     var content = document.getElementById(`content-${itemId}`);
+    var dates = document.getElementById(`dates-${itemId}`);
     var category = document.getElementById(`category-${itemId}`);
     var icon = document.getElementById(`icon-${itemId}`);
     title.innerHTML = appState['todo'][itemId].item;
     content.innerHTML = appState['todo'][itemId].content;
+    dates.innerHTML = appState['todo'][itemId].dates;
     category.innerHTML = appState['todo'][itemId].category;
     icon.src = categoriesIcons[appState['todo'][itemId].category];
 }
