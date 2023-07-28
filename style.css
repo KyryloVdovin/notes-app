@@ -8,6 +8,12 @@
     margin: 100px auto !important;
 }
 
+td span{
+    overflow: hidden;
+    width: 100px;
+    display: inline-block;
+}
+
 .summary-table-titles {
     background-color: rgb(83, 83, 83);
     display: flex;

@@ -3,6 +3,7 @@
 // Initialize Application state
 let appState = {
     totalItems: 0,
+    totalActiveItems: 0,
     todo: {},
     completed: {},
     archived: [],
@@ -30,10 +31,14 @@ const months = [
     'December',
 ]
 
-function addRow(e) {
+function recreatedArchivedNote(){
+    addRow();
+}
+
+function addRow(e, unarchivClicked = false) {
     e.preventDefault();
 
-    let itemID = appState['totalItems'];
+    let itemID = appState['totalActiveItems'];
     var table = document.getElementById('todoTable');
     var row = table.insertRow(table.rows.length);
     row.setAttribute("id", `todoItem-${itemID}`);
@@ -89,17 +94,14 @@ function addRow(e) {
         editButton(itemID);
     });
 
-    var completeBtn = row.insertCell(7);
-    completeBtn.innerHTML += "<td><button>" + "complete" + "</button></td>";
-
-    var deleteBtn = row.insertCell(8);
+    var deleteBtn = row.insertCell(7);
     deleteBtn.innerHTML += "<td><button>" + "delete" + "</button></td>";
     deleteBtn.addEventListener("click", function (e) {
         e.preventDefault();
         deleteNote(itemID);
     });
 
-    var saveBtn = row.insertCell(9);
+    var saveBtn = row.insertCell(8);
     saveBtn.innerHTML += "<td><button id=\"saveBtn-" + itemID + "\">" + "save" + "</button></td>";
     saveBtn.addEventListener("click", function (e) {
         e.preventDefault();
@@ -107,81 +109,32 @@ function addRow(e) {
     });
     saveBtn.style.display = "none";
 
-    if (!appState['todo'][itemID]) {
-        appState['todo'][itemID] = {
-            item: 'new item',
-            category: categoriesData.Task,
-            content: 'text',
-            iconPath: './img/icons/task.png',
-            fullDate: fullDate,
-            isArchived: false,
-        };
+    if (!unarchivClicked) {
+        if (!appState['todo'][itemID]) {
+            appState['todo'][itemID] = {
+                id: itemID,
+                item: 'new item',
+                category: categoriesData.Task,
+                content: 'text',
+                iconPath: './img/icons/task.png',
+                fullDate: fullDate,
+                isArchived: false,
+            };
+        }
     }
-
-    // Add Task to pending state object
-    if (!appState['pending'][itemID]) {
-        appState['pending'][itemID] = { item: 'new item' }
+    else{
+        if (!appState['todo'][itemID]) {
+            appState['todo'][itemID] = {
+                ...archivedItem
+            };
+        }
     }
-
-    // Render Pending DOM Elements
-    renderPendingElements(appState['pending'], itemID);
 
     // Increment the total number of items in state object
-    appState['totalItems'] += 1;
-
-    // clear input text in DOM
-    // document.getElementById('newTodo').value = "";
+    appState['totalActiveItems'] += 1;
 
     console.log(appState);
     countElements();
-}
-
-function toggleTodo(cb) {
-
-    // Make modification to the DOM content
-    if (cb.checked) {
-        // Check if element is present in DOM
-        if (!document.getElementById(`completedList-${cb.id}`)) {
-            var ul = document.getElementById('completedItems');
-            var li = document.createElement('li');
-            li.appendChild(document.createTextNode(appState['pending'][cb.id]['item']));
-            li.setAttribute("id", `completedList-${cb.id}`);
-            ul.appendChild(li);
-        }
-        // Remove DOM element from pending list
-        var removeElement = document.getElementById(`pendingList-${cb.id}`);
-        removeElement.parentNode.removeChild(removeElement);
-    } else {
-        // Check if element is present in DOM
-        if (!document.getElementById(`pendingList-${cb.id}`)) {
-            var ul = document.getElementById('pendingItems');
-            var li = document.createElement('li');
-            li.appendChild(document.createTextNode(appState['completed'][cb.id]['item']));
-            li.setAttribute("id", `pendingList-${cb.id}`);
-            ul.appendChild(li);
-        }
-        // Remove DOM element from pending list
-        var removeElement = document.getElementById(`completedList-${cb.id}`);
-        removeElement.parentNode.removeChild(removeElement);
-    }
-
-    // Make modification to application state
-    // We need to modidy DOM State before changing the app state because we delete state objects
-    if (cb.checked) {
-        // Add task to Completed object
-        if (!appState['completed'][cb.id]) {
-            appState['completed'][cb.id] = { item: appState['pending'][cb.id]['item'] }
-        }
-        // Remove task from pending object
-        delete appState['pending'][cb.id];
-    } else {
-        // Add task to Pending object
-        if (!appState['pending'][cb.id]) {
-            appState['pending'][cb.id] = { item: appState['completed'][cb.id]['item'] }
-        }
-        // Remove task from Completed object
-        delete appState['completed'][cb.id];
-    }
 }
 
 function editButton(itemId) {
@@ -200,14 +153,18 @@ function editButton(itemId) {
         let buttons = item.getElementsByTagName("button");
         let saveBtn = document.getElementById(`saveBtn-${itemId}`).parentNode;
         let createNodeBtn = document.getElementById('createNoteBtn');
+
         for (let button of buttons) {
             if (`todoItem-${itemId}`) {
                 button.parentNode.style.display = 'none';
             }
         }
+
         var title = document.getElementById(`title-${itemId}`);
         var content = document.getElementById(`content-${itemId}`);
         var category = document.getElementById(`category-${itemId}`);
+        inputTitle.value = appState['todo'][itemId].item;
+        contentInput.value = appState['todo'][itemId].content;
         inputTitle.style.display = 'block';
         contentInput.style.display = 'block';
         categoryDropDown.style.display = 'block';
@@ -256,20 +213,13 @@ function saveButton(itemId) {
     }
 
     appState['todo'][itemId] = {
+        ...appState['todo'][itemId],
         item: inputTitle.value,
         category: categoryDropDown.value,
         content: contentInput.value,
         isArchived: false
     };
     updateElement(itemId);
-
-    // if (!appState['todo'][itemId]) {
-    //     appState['todo'][itemId] = {
-    //         item: 'new item',
-    //         category: Categories.RandomThought,
-    //         isEditing: false
-    //     };
-    // }
 }
 
 function deleteNote(itemId) {
@@ -281,9 +231,8 @@ function deleteNote(itemId) {
         ...appState['todo'][itemId],
         isArchived: true,
     });
-
-    // if(appState['todo'][itemId].isArchived)
-
+    appState['totalActiveItems'] -= 1;
+    delete appState['todo'][itemId];
     let item = document.getElementById(`todoItem-${itemId}`);
     item.remove();
     countElements();
@@ -298,27 +247,33 @@ function renderPendingElements(pending, itemID) {
 }
 
 function countElements() {
-    let tasks = 0;
-    let idea = 0;
-    let randomThought = 0;
-    let quote = 0;
+    let activeTasks = 0;
+    let activeIdea = 0;
+    let activeRandomThought = 0;
+    let activeQuote = 0;
+    let archivedTasks = 0;
+    let archivedIdea = 0;
+    let archivedRandomThought = 0;
+    let archivedQuote = 0;
 
     for (const [key, value] of Object.entries(appState['todo'])) {
-        if (!value.isArchived) {
-            switch (value.category) {
-                case 'Task':
-                    tasks++;
-                    break;
-                case 'Idea':
-                    idea++;
-                    break;
-                case 'RandomThought':
-                    randomThought++;
-                    break;
-                case 'Quote':
-                    quote++;
-                    break;
-            }
+        switch (value.category) {
+            case 'Task':
+                activeTasks = !value.isArchived ? activeTasks + 1 : activeTasks;
+                archivedTasks = value.isArchived ? archivedTasks + 1 : archivedTasks;
+                break;
+            case 'Idea':
+                activeIdea = !value.isArchived ? activeIdea + 1 : activeIdea;
+                archivedIdea = value.isArchived ? archivedIdea + 1 : archivedIdea;
+                break;
+            case 'RandomThought':
+                activeRandomThought = !value.isArchived ? activeRandomThought + 1 : activeRandomThought;
+                archivedRandomThought = value.isArchived ? archivedRandomThought + 1 : archivedRandomThought;
+                break;
+            case 'Quote':
+                activeQuote = !value.isArchived ? activeQuote + 1 : activeQuote;
+                archivedQuote = value.isArchived ? archivedQuote + 1 : archivedQuote;
+                break;
         }
     }
 
@@ -327,16 +282,35 @@ function countElements() {
     var ideaSummaryActiveCount = document.getElementById('idea-summary-active-count');
     var quotesSummaryActiveCount = document.getElementById('quotes-summary-active-count');
 
-    taskSummaryActiveCount.innerHTML = tasks;
-    randomThoughtSummaryActiveCount.innerHTML = randomThought;
-    ideaSummaryActiveCount.innerHTML = idea;
-    quotesSummaryActiveCount.innerHTML = quote;
-}
+    var taskSummaryArchivedCount = document.getElementById('task-summary-archived-count');
+    var randomThoughtSummaryArchivedCount = document.getElementById('random-thought-summary-archived-count');
+    var ideaSummaryArchivedCount = document.getElementById('idea-summary-archived-count');
+    var quotesSummaryArchivedCount = document.getElementById('quotes-summary-archived-count');
 
+    taskSummaryActiveCount.innerHTML = activeTasks;
+    randomThoughtSummaryActiveCount.innerHTML = activeRandomThought;
+    ideaSummaryActiveCount.innerHTML = activeIdea;
+    quotesSummaryActiveCount.innerHTML = activeQuote;
+
+    taskSummaryArchivedCount.innerHTML = archivedTasks;
+    randomThoughtSummaryArchivedCount.innerHTML = archivedRandomThought;
+    ideaSummaryArchivedCount.innerHTML = archivedIdea;
+    quotesSummaryArchivedCount.innerHTML = archivedQuote;
+}
+let category;
+
+function setCategory(type) {
+    category = type;
+}
 function showArchivedTasks(e) {
     e.preventDefault();
-    console.log("appState.archived = " + appState.archived.length);
-    appState.archived.map((item, index) => {
+    let table = document.getElementById('archived-items');
+    table.innerHTML = '';
+
+    let archivedItems = [...appState.archived];
+    let sortedItems = archivedItems.filter(item => item.category === category);
+
+    sortedItems.map((item, index) => {
         createArchivedItem(item, index);
     });
 }
@@ -367,12 +341,31 @@ function createArchivedItem(item, itemID) {
     var dates = row.insertCell(5);
     dates.innerHTML += "<td>" + "dates" + "</td>";
 
-    var editBtn = row.insertCell(6);
-    editBtn.innerHTML += "<td><button>" + "unarchive" + "</button></td>";
-    editBtn.addEventListener("click", function (e) {
+    var unarchiveBtn = row.insertCell(6);
+    unarchiveBtn.innerHTML += "<td><button>" + "unarchive" + "</button></td>";
+    unarchiveBtn.addEventListener("click", function (e) {
         e.preventDefault();
-        // editButton(itemID);
+        unarchiveItem(e, item);
     });
+}
+let archivedItem;
+
+function unarchiveItem(e, item) {
+    archivedItem = appState.archived.find(element => element.id === item.id);
+    const index = appState.archived.indexOf(item);
+
+    // appState['todo'][archivedItem.id] = {
+    //     ...appState['todo'][archivedItem.id],
+    //     isArchived: false
+    // };
+    if (index > -1) { // only splice array when item is found
+        appState.archived.splice(index, 1); // 2nd parameter means remove one item only
+    }
+    // appState.archived
+    // appState.archived.filter(item => item.id !== archivedItem.id)
+    // delete appState['todo'][archivedItem.id];
+    addRow(e, true);
+    showArchivedTasks(e);
 }
 
 function updateElement(itemId) {
